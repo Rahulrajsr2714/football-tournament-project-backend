@@ -17,6 +17,7 @@ from django.db.models import Q
 import random
 from rest_framework.pagination import PageNumberPagination
 import math
+import datetime
 
 
 @csrf_exempt
@@ -42,7 +43,6 @@ def loginadmin(request):
 @permission_classes((AllowAny,))
 def getteamcount(request):
     team_count = TeamDetails.objects.all().count()
-    # makefixture()
     return Response({'count': team_count},
                     status=HTTP_200_OK)
 
@@ -79,6 +79,7 @@ def makefixture():
     delta = edate - sdate
 
     match_teams = list(TeamDetails.objects.all())  # [1,2,3,4,5,6,7,8,9,10]
+    print(match_teams)
 
     middle_index = int(len(match_teams)/2)
 
@@ -92,6 +93,9 @@ def makefixture():
     temp_teams_list.append(secondhalf)  # [[1,2,3,4,5],[10,9,8,7,6]]
 
     for i in range(0, 9):
+        for j in range(0, 5):
+            matches.append([temp_teams_list[0][j], temp_teams_list[1][j]])
+
         left_jumper = temp_teams_list[1][0]
         right_jumper = temp_teams_list[0][4]
 
@@ -106,25 +110,24 @@ def makefixture():
         temp_teams_list[1][3] = temp_teams_list[1][4]
         temp_teams_list[1][4] = right_jumper
 
-        for j in range(0, 5):
-            matches.append([temp_teams_list[0][j], temp_teams_list[1][j]])
-
     scheduled = []
     venue = ['Kerala', 'Punjab', 'Tamilnadu', 'Delhi', 'Banglore']
 
     match_objects = []
-    for d in range(delta.days + 1):
-        i = 0
-        day = sdate + timedelta(days=d)
-        for match in matches:
-            scheduled.append([day, match, random.choice(venue)])
-            match_instance = TeamMatches(
-                date=day, team_a=match[0], team_b=match[1], venue=random.choice(venue))
-            match_objects.append(match_instance)
-            matches.remove(match)
-            i = i + 1
-            if(i == 2):
-                break
+    day = datetime.date(2023, 8, 1)
+    time = datetime.time(8)
+    date_tracker = 1
+    for match in matches:
+        scheduled.append([day, match, random.choice(venue)])
+        match_instance = TeamMatches(
+            date=day, team_a=match[0], team_b=match[1], venue=random.choice(venue), time=time)
+        match_objects.append(match_instance)
+        time = datetime.time(16)
+        if(date_tracker % 2 == 0):
+            time = datetime.time(8)
+            day += timedelta(days=1)
+        date_tracker = date_tracker + 1
+
     TeamMatches.objects.bulk_create(match_objects)
 
 
